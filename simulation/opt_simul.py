@@ -10,24 +10,17 @@ import numpy as np
 
 
 def Apply_expTeven(phi, c, nbits, hbar, dt):
+	N = phi.size
 	#Compared and checked : Works perfectly
 	#TODO Make sure that hte vector has even number of entries
-
-	a = np.zeros(phi[::2].shape, dtype = np.complex128)
 	#M = c*np.asmatrix([[1,-1],[-1,1]])
-	#expM = qo.matpowerh(np.power(np.e,-1j), (dt/hbar)*M)
+	#expM = qo.matpowerh(np.exp(-1j*dt/hbar),M)
 	alpha = np.exp(-1j*dt*2*c/hbar)
-	expM = 0.5*np.asmatrix([[1.0+alpha, 1.0-alpha],[1.0-alpha, 1.0+alpha]], dtype = np.complex128)
-	## Multiplication with the Teven laplacian
-	##Using swapping
-	phi1 = np.zeros(phi.shape, dtype = np.complex128)
-	phi1[:] = phi[:]
-	a[:] = phi[::2]
-	phi[::2] = phi[1::2]
-	phi[1::2] = a[:]
-	phi1 = phi1*expM[0,0]
-	phi  = phi*expM[0,1]
-	return phi1 + phi
+	expM = 0.5*np.asmatrix([[1.0+alpha, 1.0-alpha],[1.0-alpha, 1.0+alpha]])
+	x = phi.reshape(N/2,2).T
+	y = (expM*np.asmatrix(x)).T.flatten()
+	
+	return np.asarray(y).T
 
 
 	
