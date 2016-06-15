@@ -6,6 +6,7 @@ from collections import namedtuple
 """
 This library implements a quantum circuit using efficient implementation of loacl unitaries using the  numpy einsum library
 """
+#TODO check data types of inputs using isinstance function
 
 Circ_sec = namedtuple('Circuit Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit
 
