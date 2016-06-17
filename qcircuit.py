@@ -40,10 +40,17 @@ class Qcircuit(object):
 
     """	
    #TODO Figure out a way to implement control operations efficiently
-
+   #XXX np.eisum doesnt work id dimensions are more than 26
+   #TODO Implement checks eg: qreg.nbits and self.nbits should match
     if from_to == None:
        from_to = range(self.seclist.__len__()) 
-
+       n = self.nbits
+       phi = qreg.array.reshape([2]*nbits)
+    for op in self.oper_list[from_to]:
+       k = op(qbitset).__len__()
+       U  = op(operator).reshape([2]*(2*k))
+       ind = op(qbitset)
+       #TODO Match the qubit indices given in ind and write the einsum function  
 
    
 
