@@ -8,14 +8,14 @@ This library implements a quantum circuit using efficient implementation of loac
 """
 #TODO check data types of inputs using isinstance function
 
-Circ_sec = namedtuple('Circuit Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit
+Circ_sec = namedtuple('Circuit_Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit
 
 class Qcircuit(object):
 
   def __init__(self,nbits):
-  """
+    """
     nbits  gives the number of qubits in the circuit 
-  """	
+    """	
     self.nbits = nbits
     self.oper_list = []
 
@@ -42,18 +42,22 @@ class Qcircuit(object):
    #TODO Figure out a way to implement control operations efficiently
    #XXX np.eisum doesnt work id dimensions are more than 26
    #TODO Implement checks eg: qreg.nbits and self.nbits should match
+   #XXX Write testers for this
     if from_to == None:
        from_to = range(self.seclist.__len__()) 
        n = self.nbits
        phi = qreg.array.reshape([2]*nbits)
+       phi_out = phi ##XXX  Copy of ref?
     for op in self.oper_list[from_to]:
        k = op(qbitset).__len__()
        U  = op(operator).reshape([2]*(2*k))
        ind = op(qbitset)
        #TODO Match the qubit indices given in ind and write the einsum function  
-
-   
-
+       phi_ind = range(n)
+       u_ind = range(n,n+k) + phi_ind[ind]
+       phi_out = np.einsum(U,u_ind,phi_out,phi_ind) 
+       
+    return Qreg(n,phi_out)
   def __mult__(self, qreg):
     return evaluate(self, qreg) 
       
