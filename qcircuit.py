@@ -9,6 +9,29 @@ This library implements a quantum circuit using efficient implementation of loac
 #TODO check data types of inputs using isinstance function
 
 Circ_sec = namedtuple('Circuit_Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit
+def apply_circ_sec(sec,phi):
+  """
+   To apply a given circuit section to a given numpy array reshaped to the shape (2,2,2...)
+   Inputs: 
+       sec : An Circ_sec instance
+       phi : numpy array of the shape (2,2,2...)
+       
+   Output: 
+        phi_out: numpy array after application of the circuit section
+   
+  """
+  #TODO Implement control operations
+  #XXX np.eisum doesnt work if dimensions are more than 26
+  k = sec(qbitset).__len__()
+  U  = sec(operator).reshape([2]*(2*k))
+  ind = sec(qbitset)
+  phi_ind = range(n)
+  u_ind = range(n,n+k) + phi_ind[ind]
+  phi_out = np.einsum(U,u_ind,phi,phi_ind) 
+  return phi_out 
+   
+
+
 
 class Qcircuit(object):
 
@@ -22,12 +45,14 @@ class Qcircuit(object):
   def insert_operator(self,qop, qbitset, cntrl1 = [], cntrl0 = []):
     """
      Add an operator to the circuit.
-     qop - Qoperaotr instance that we need to add
+     qop - Matrix instance that we need to add
      qbitset - list of qubits on which qop acts
      cntrl1 - list of qubits from which we control qop (black dot)
      cntrl0 - list of qubits from which we contrl  qop (white dot)
-     
+       
     """
+    #TODO The user adds a matrix and not a Qoperator instance. Add code to convert the operator to a Qoperaor instance
+    #TODO Check if the size of the operator matches with the size of the  qubit set
     sec = Circ_sec(qop, qbitset, cntrl1, cntr0)
     self.oper_list.append(sec)
 
@@ -39,7 +64,6 @@ class Qcircuit(object):
                
 
     """	
-   #TODO Figure out a way to implement control operations efficiently
    #XXX np.eisum doesnt work id dimensions are more than 26
    #TODO Implement checks eg: qreg.nbits and self.nbits should match
    #XXX Write testers for this
@@ -47,15 +71,10 @@ class Qcircuit(object):
        from_to = range(self.seclist.__len__()) 
        n = self.nbits
        phi = qreg.array.reshape([2]*nbits)
-       phi_out = phi ##XXX  Copy of ref?
+       phi_out = np.zeros(phi.shape)
+       phi_out[:] = phi[:]
     for op in self.oper_list[from_to]:
-       k = op(qbitset).__len__()
-       U  = op(operator).reshape([2]*(2*k))
-       ind = op(qbitset)
-       #TODO Match the qubit indices given in ind and write the einsum function  
-       phi_ind = range(n)
-       u_ind = range(n,n+k) + phi_ind[ind]
-       phi_out = np.einsum(U,u_ind,phi_out,phi_ind) 
+       phi_out = apply_circ_sec(op,phi_out)
        
     return Qreg(n,phi_out)
   def __mult__(self, qreg):
