@@ -73,13 +73,14 @@ class Qcircuit(object):
   def insert_operator(self,qop, qbitset, cntrl1 = [], cntrl0 = []):
     """
      Add an operator to the circuit.
-     qop - Matrix instance that we need to add
+     qop - numpy array for the operator instance that we need to add
      qbitset - list of qubits on which qop acts
      cntrl1 - list of qubits from which we control qop (black dot)
      cntrl0 - list of qubits from which we contrl  qop (white dot)
        
     """
-    #TODO The user adds a matrix and not a Qoperator instance. Add code to convert the operator to a Qoperaor instance
+    #TODO The user adds a numpy array and not a Qoperator instance. Add code to convert the operator to a Qoperaor instance
+    #TODO Take care of the cases for which qop is a np.matrix instance
     #TODO Check if the size of the operator matches with the size of the  qubit set
     sec = Circ_sec(qop, qbitset, cntrl1, cntrl0)
     self.oper_list.append(sec)
