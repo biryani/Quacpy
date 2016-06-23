@@ -6,7 +6,7 @@ from collections import namedtuple
 """
 This library implements a quantum circuit using efficient implementation of loacl unitaries using the  numpy einsum library
 """
-def  sub_slicer(array, dims, indices):
+def  sub_slice(array, dims, indices):
   """
    Selects a subarray from a multidimensionalarray, with the values given by 
    indicies in corresponding positions given by dims. indicies cannot be ranges, only values.
@@ -41,7 +41,7 @@ def apply_circ_sec(sec,phi):
         phi_out: numpy array after application of the circuit section
    
   """
-  
+  n = phi.ndim
   cntrl0 = sec.cntrl0
   cntrl1 = sec.cntrl1
   cntrls = [0]*len(cntrl0) + [1]*len(cntrl1)
@@ -51,10 +51,11 @@ def apply_circ_sec(sec,phi):
   U  = sec.operator.reshape([2]*(2*k))
   ind = sec.qbitset
   phi_ind = range(n)
-  u_ind = range(n,n+k) + phi_ind[ind]
+  u_ind = range(n,n+k) + [phi_ind[i] for i in ind]
   phi_out_sub = np.einsum(U,u_ind,phi_sub,phi_ind) 
   phi_out = phi.copy()
-  sub_slice(phi_out, cntrl0 +cntrl1, cntrls) = phi_out_sub
+  phi_out_slice =  sub_slice(phi_out, cntrl0 +cntrl1, cntrls)
+  phi_out_slice = phi_out_sub
   return phi_out 
    
 
@@ -80,31 +81,33 @@ class Qcircuit(object):
     """
     #TODO The user adds a matrix and not a Qoperator instance. Add code to convert the operator to a Qoperaor instance
     #TODO Check if the size of the operator matches with the size of the  qubit set
-    sec = Circ_sec(qop, qbitset, cntrl1, cntr0)
+    sec = Circ_sec(qop, qbitset, cntrl1, cntrl0)
     self.oper_list.append(sec)
 
-  def evaluate(self, qreg, from_to = None):
+  def evaluate(self, qreg, from_to = slice(None,)):
     """
      Find the effect of the circuit on the Qregister instance qreg
-     from_to - Instead of evaluating the whole circuit we can evalute a parts of it
-               eg: if from_to = [2,3,4], we evaluate the sub circuit given by the sections 2,3 and 4 on qreg.
+     from_to - Instead of evaluating the whole circuit we can evalute  parts of it
+               eg: if from_to = slice(2,4), we evaluate the sub circuit given by the sections 2,3  on qreg.
                
 
     """	
    #XXX np.eisum doesnt work id dimensions are more than 26
    #TODO Implement checks eg: qreg.nbits and self.nbits should match
+   #XXX Proper errors and warnings
    #XXX Write testers for this
-    if from_to == None:
-       from_to = range(self.seclist.__len__()) 
-       n = self.nbits
-       phi = qreg.array.reshape([2]*nbits)
-       phi_out = np.zeros(phi.shape)
-       phi_out[:] = phi[:]
+
+       
+    n = self.nbits
+    phi = qreg.array.reshape([2]*n)
+    phi_out = np.zeros(phi.shape)
+    phi_out[:] = phi[:]
     for op in self.oper_list[from_to]:
        phi_out = apply_circ_sec(op,phi_out)
        
-    return Qreg(n,phi_out)
+    return qr.Qreg(n,phi_out)
   def __mult__(self, qreg):
+  #XXX Not working! 
     return evaluate(self, qreg) 
       
      
