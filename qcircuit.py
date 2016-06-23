@@ -41,14 +41,20 @@ def apply_circ_sec(sec,phi):
         phi_out: numpy array after application of the circuit section
    
   """
-  #TODO Implement control operations
+  
+  cntrl0 = sec.cntrl0
+  cntrl1 = sec.cntrl1
+  cntrls = [0]*len(cntrl0) + [1]*len(cntrl1)
+  phi_sub = sub_slice(phi, cntrl0 +cntrl1, cntrls)
   #XXX np.eisum doesnt work if dimensions are more than 26
-  k = sec(qbitset).__len__()
-  U  = sec(operator).reshape([2]*(2*k))
-  ind = sec(qbitset)
+  k = len(sec.qbitset)
+  U  = sec.operator.reshape([2]*(2*k))
+  ind = sec.qbitset
   phi_ind = range(n)
   u_ind = range(n,n+k) + phi_ind[ind]
-  phi_out = np.einsum(U,u_ind,phi,phi_ind) 
+  phi_out_sub = np.einsum(U,u_ind,phi_sub,phi_ind) 
+  phi_out = phi.copy()
+  sub_slice(phi_out, cntrl0 +cntrl1, cntrls) = phi_out_sub
   return phi_out 
    
 
