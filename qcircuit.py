@@ -6,6 +6,27 @@ from collections import namedtuple
 """
 This library implements a quantum circuit using efficient implementation of loacl unitaries using the  numpy einsum library
 """
+def  sub_slicer(array, dims, indices):
+  """
+   Selects a subarray from a multidimensionalarray, with the values given by 
+   indicies in corresponding positions given by dims. indicies cannot be ranges, only values.
+   Required for implementing control operations.
+  """
+
+
+  ndim = array.ndim
+  ind_list = []
+  for i in range(ndim):
+    if i in dims:
+      j  = dims.index(i)
+      ind_list.append(slice(indices[j], indices[j]+1, None))
+    else:
+      ind_list.append(slice(None,))       
+     
+  return array[ind_list]
+
+
+
 #TODO check data types of inputs using isinstance function
 
 Circ_sec = namedtuple('Circuit_Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit
