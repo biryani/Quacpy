@@ -6,22 +6,54 @@ import numpy as np
 """
 Test functions for Quacpy
 """
-def compare_einsum_dot(n,k):
+def  sub_slice(array, dims, indices):
+  """
+   Selects a subarray from a multidimensionalarray, with the values given by 
+   indicies in corresponding positions given by dims. indicies cannot be ranges, only values.
+   Required for implementing control operations.
+  """
+
+
+  ndim = array.ndim
+  ind_list = []
+  for i in range(ndim):
+    if i in dims:
+      j  = dims.index(i)
+      ind_list.append(slice(indices[j], indices[j]+1, None))
+    else:
+      ind_list.append(slice(None,))       
+     
+  return array[ind_list]
+
+def compare_einsum_dot(n,k,d = 0):
   """
    Proof of concept tests to check if the einsum based tensor contraction gives    the same result as multiplication with an operaqtor of the form I \otimes U.
    returns the error between the two implementations  
    
   """
-  #ZERO_ERROR -Verified on Jun-23-2016
-  phi = np.random.random_sample([2]*n)
-  U =  np.random.random_sample([2]*(2*k))
-  M = np.kron(np.eye(2**(n-k)),U.reshape(2**k,2**k))
-  x = phi.flatten()
+  #ZERO_ERROR - for all d >= 0 Verified on Jun-24-2016
+ 
+  phi = np.random.random_sample([2]*n) + 1j*np.random.random_sample([2]*n)
+  U =  np.random.random_sample([2]*(2*k)) + 1j*np.random.random_sample([2]*(2*k))
+  M = np.kron(np.eye(2**(n-k-d)),U.reshape(2**k,2**k))
+  M = np.kron(M, np.eye(2**d))
+  #print M.shape, 2**n
+  x = phi.flatten().copy()
   t1 = np.dot(M, x)
   ind = range(n)
-  indU = ind[-k:]
-  indU =  range(n,n+k) + indU
-  t2 = np.einsum( U, indU, phi, ind)
+  indU = ind[-k-d:-d]
+  if d == 0: indU = ind[-k:]
+  #print ind
+  indU =  range(n,n+k) + indU 
+  indout = range(n) 
+  if d == 0:
+    indout[-k:] = range(n,n+k)	
+  else:
+    indout[-k-d:-d] = range(n, n+k) #outputshape
+ 
+  #print indU
+  t2 = np.einsum( U, indU, phi, ind, indout)
+  #print t2.shape
   return np.linalg.norm(t1 - t2.flatten())
  
 def check_qcircuit_nocntrl(nbits, circ_length):
@@ -36,9 +68,9 @@ def check_qcircuit_nocntrl(nbits, circ_length):
   op_list = []
   for i in range(circ_length):
     pos = np.random.choice(nbits)
-    #print "pos" , pos
+    print "pos" , pos
     size  = np.random.choice(range(1,nbits - pos+1))
-    #print "size", size
+    print "size", size
     qubitset = range(pos, pos +size)
     A = np.asmatrix( np.random.rand(  2**size, 2**size) + 1j* np.random.rand( 2**size, 2**size))
     A = A + A.H
@@ -48,24 +80,27 @@ def check_qcircuit_nocntrl(nbits, circ_length):
     Circuit.insert_operator(np.asarray(S),qubitset)
     
     U = np.kron(np.eye(2**pos),U)
+    print 2**nbits/U.shape[0]
     U = np.kron(U, np.eye(2**nbits/U.shape[0]) )
+   
     if U.shape[0] !=  2**nbits:
     	raise ValueError("Size mismatch")
     op_list.append(U)	
      
     
-  phi = np.random.rand(2**nbits) + np.random.rand(2**nbits)
+  phi = np.random.rand(2**nbits) + 1j*np.random.rand(2**nbits)
   phi = phi / np.linalg.norm(phi)
   phi = phi.reshape(2**nbits,1)
-  reg = qr.Qreg(nbits,phi.copy())
+  reg = qr.Qreg(nbits,phi)
+  
   reg = Circuit.evaluate(reg)
   
   for V in op_list:
     phi = np.dot(V,phi)
     
   error = np.linalg.norm( phi - reg.array.reshape( 2**nbits, 1))/ float( 2**nbits)
-  print reg.array.reshape( 2**nbits, 1)[0]
-  return error 
+  
+  return error#, phi, reg.array, U
   
   
 def check_qcircuit_withcontrol(nbits, circ_length):

@@ -8,7 +8,7 @@ This library implements a quantum circuit using efficient implementation of loac
 """
 def  sub_slice(array, dims, indices):
   """
-   Selects a subarray from a multidimensionalarray, with the values given by 
+   Returns a slice object that selects a subarray from a multidimensionalarray, with the values given by 
    indicies in corresponding positions given by dims. indicies cannot be ranges, only values.
    Required for implementing control operations.
   """
@@ -23,13 +23,14 @@ def  sub_slice(array, dims, indices):
     else:
       ind_list.append(slice(None,))       
      
-  return array[ind_list]
+  return ind_list
 
 
 
 #TODO check data types of inputs using isinstance function
 
-Circ_sec = namedtuple('Circuit_Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit
+Circ_sec = namedtuple('Circuit_Section', 'operator, qbitset, cntrl1, cntrl0') ## Single section of the circuit 
+######################################################################################################
 def apply_circ_sec(sec,phi):
   """
    To apply a given circuit section to a given numpy array reshaped to the shape (2,2,2...)
@@ -45,21 +46,28 @@ def apply_circ_sec(sec,phi):
   cntrl0 = sec.cntrl0
   cntrl1 = sec.cntrl1
   cntrls = [0]*len(cntrl0) + [1]*len(cntrl1)
-  phi_sub = sub_slice(phi, cntrl0 +cntrl1, cntrls)
+  phi_sub = phi[sub_slice(phi, cntrl0 +cntrl1, cntrls)]
+ 
   #XXX np.eisum doesnt work if dimensions are more than 26
   k = len(sec.qbitset)
   U  = sec.operator.reshape([2]*(2*k))
   ind = sec.qbitset
   phi_ind = range(n)
   u_ind = range(n,n+k) + [phi_ind[i] for i in ind]
-  phi_out_sub = np.einsum(U,u_ind,phi_sub,phi_ind) 
+  indout = range(n)
+  for index, i in enumerate(ind):
+    indout[i] = range(n,n+k)[index] 
+
+  phi_out_sub = np.einsum(U,u_ind,phi_sub,phi_ind, indout) 
   phi_out = phi.copy()
-  phi_out_slice =  sub_slice(phi_out, cntrl0 +cntrl1, cntrls)
-  phi_out_slice = phi_out_sub
-  return phi_out 
+  phi_out[sub_slice(phi_out, cntrl0 +cntrl1, cntrls)] = phi_out_sub	
+
+  #phi_out_sub=  sub_slice(phi_out, cntrl0 +cntrl1, cntrls)
+  #phi_out_slice = phi_out_sub
+  return phi_out
    
 
-
+###########################################################################################################
 
 class Qcircuit(object):
 
@@ -101,7 +109,7 @@ class Qcircuit(object):
        
     n = self.nbits
     phi = qreg.array.reshape([2]*n)
-    phi_out = np.zeros(phi.shape)
+    phi_out = np.zeros(phi.shape, dtype = np.complex128)
     phi_out[:] = phi[:]
     for op in self.oper_list[from_to]:
        phi_out = apply_circ_sec(op,phi_out)
