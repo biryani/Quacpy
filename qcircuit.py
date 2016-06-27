@@ -87,9 +87,8 @@ class Qcircuit(object):
      cntrl0 - list of qubits from which we control  qop (white dot)
        
     """
-    #TODO The user adds a numpy array and not a Qoperator instance. Add code to convert the operator to a Qoperaor instance
-    #TODO Take care of the cases for which qop is a np.matrix instance
-    #TODO Check if the size of the operator matches with the size of the  qubit set
+
+
     if isinstance(qop,qo.Qoperator):
       op = np.asarray(qop.matrix) 
     elif isinstance(qop, np.matrix):
@@ -99,6 +98,17 @@ class Qcircuit(object):
     assert (isinstance(op, np.ndarray)), "qop must one of the three types specified in the documentation"   
     sec = Circ_sec(op, qbitset, cntrl1, cntrl0)
     self.oper_list.append(sec)
+    
+#########################################################################################  
+
+  def inv(self):
+    self.oper_list = self.oper_list[::-1]
+    return
+
+
+
+
+#########################################################################################  
 
   def evaluate(self, qreg, from_to = slice(None,)):
     """
@@ -176,6 +186,7 @@ class Qcircuit(object):
   
     
   def __add__(self, other):
+    #TODO Check
     
     assert ( self.nbits == other.nbits), "Circuits must have same number of qubits"
     out_circ = Qcircuit( self.nbits)
@@ -183,6 +194,7 @@ class Qcircuit(object):
     return out_circ 
     
   def __iadd__(self, other):
+     #TODO Check
     
     assert ( self.nbits == other.nbits), "Circuits must have same number of qubits"
     self.oper_list += other.oper_list
