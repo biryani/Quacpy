@@ -161,7 +161,7 @@ def check_qcircuit_withcontrol(nbits, circ_length):
   phi = np.random.rand(2**nbits) + 1j*np.random.rand(2**nbits)
   phi = phi / np.linalg.norm(phi)
   phi = phi.reshape(2**nbits,1)
-  reg = qr.Qreg(nbits,phi)
+  reg = qr.Qreg(nbits,phi.copy())
   
   reg = Circuit*reg ##operator oveloading!!
   
@@ -176,19 +176,33 @@ def H_op():
   return (1/np.sqrt( 2))*np.array([[1, 1], [1, -1]], dtype = complex)
     
 def R_op(theta):
-  return np.array([[1, 0], [np.exp(1j*theta), 0]], dtype = complex)      
+  return np.array([[1, 0], [0,np.exp(1j*theta)]], dtype = complex)      
       
   
 def fourier(nbits):
   """
     Checking the correctness of Qcircuit operations by implementing the Fourier transform circuit and comparing the result to multiplication by the Fourier operator directly
   """
+  n  =  nbits
 ##TODO IMplement from Mike and Ike 
- 
+  if n ==1 :
+    F = qc.Qcircuit(1)
+    F.insert_operator(H_op(), [0])
+    return F
    
-  
-    return C 
     
+  elif n > 1 :
+    F = fourier( nbits -1)
+    F.nbits += 1
+    for i in range(n-1,0,-1):
+      F.insert_operator(R_op(2*np.pi/float(2**(i+1))), [n-1], cntrl1 = [0])
+      
+    F.insert_operator(H_op(), [n-1])
+    return F        
+  
+  else:
+    raise ValueError("number of qubits should be an integer greater than or equal to 1")
+    return
    
    
    
